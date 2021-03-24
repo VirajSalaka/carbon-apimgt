@@ -50,6 +50,8 @@ public class AnalyticsDataPublisher {
     public void initialize(Map<String, String> configs) {
 
         String reporterClass = configs.get("publisher.reporter.class");
+        boolean isChoreoPublisher = configs.containsKey("apim.internal.isChoreo")
+                && Boolean.parseBoolean(configs.get("apim.internal.isChoreo"));
         try {
             MetricReporter metricReporter;
             if (reporterClass != null) {
@@ -58,10 +60,17 @@ public class AnalyticsDataPublisher {
             } else {
                 metricReporter = MetricReporterFactory.getInstance().createMetricReporter(configs);
             }
-            this.successMetricReporter = metricReporter
-                    .createCounterMetric(Constants.RESPONSE_METRIC_NAME, MetricSchema.RESPONSE);
-            this.faultyMetricReporter = metricReporter
-                    .createCounterMetric(Constants.FAULTY_METRIC_NAME, MetricSchema.ERROR);
+            if (isChoreoPublisher) {
+                this.successMetricReporter = metricReporter
+                        .createCounterMetric(Constants.RESPONSE_METRIC_NAME, MetricSchema.CHOREO_RESPONSE);
+                this.faultyMetricReporter = metricReporter
+                        .createCounterMetric(Constants.FAULTY_METRIC_NAME, MetricSchema.CHOREO_ERROR);
+            } else {
+                this.successMetricReporter = metricReporter
+                        .createCounterMetric(Constants.RESPONSE_METRIC_NAME, MetricSchema.RESPONSE);
+                this.faultyMetricReporter = metricReporter
+                        .createCounterMetric(Constants.FAULTY_METRIC_NAME, MetricSchema.ERROR);
+            }
         } catch (MetricCreationException e) {
             log.error("Error initializing event publisher.", e);
         }
